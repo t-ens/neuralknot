@@ -1,0 +1,17 @@
+# Model data directories containing generated data
+*_data/
+
+# Don't track datasets
+dataset/
+
+# Python bytecode files
+*.pyc
+__pycache__/
+
+# VIM swap files
+*.sw[op]
+
+# Backup files
+*~
+
+
