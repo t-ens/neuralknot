@@ -87,15 +87,22 @@ def predictions(num, ds, model, class_names):
             plt.show()
 #
 #
-##history= model.fit(
-##            train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE),
-##            validation_data = val_ds.cache().prefetch(buffer_size=AUTOTUNE),
-##            epochs = 100,
-##            callbacks=callbacks)
 #
 #
-#predict_model = Sequential([model, Softmax()])
-#predictions(10, val_ds, predict_model, class_names)
+
+def set_directories(net_name, model_name):
+    bd = '/'.join(['neuralknot',net_name])
+    dd = '/'.join([bd, 'dataset', 'images'])
+    md = '/'.join([bd, f'{model_name}_data'])
+    if not os.path.isdir(md):
+        os.mkdir(md)
+
+    return bd, dd, md
+
+def load_data(net_name, data_dir):
+    train_ds, val_ds = nets[net_name]['data_loader'](data_dir)
+    class_names = train_ds.class_names
+    return train_ds, val_ds, class_names
 
 def main():
     """Very simple interactive loop to load data and models, visualize either
@@ -105,29 +112,40 @@ def main():
     net_name = 'numcrossings'
     model_name = 'blockconv'
 
-    base_dir = '/'.join(['neuralknot',net_name])
-    data_dir = '/'.join([base_dir, 'dataset', 'images'])
-    model_dir = '/'.join([base_dir, f'{model_name}_data'])
-    if not os.path.isdir(model_dir):
-        os.mkdir(model_dir)
+    base_dir, data_dir, model_dir = set_directories(net_name, model_name)
 
-    data_loaded = False
-    model_loaded = False
+    data_loaded, model_loaded = False, False
     while True:
         print(f'Selected Model: {net_name}:{model_name}') 
         print('Options:')
         print('  1) Change model')
         print('  2) Plot model history')
-        print('  3) Load data')
-        print('  4) Visualize data')
-        print('  5) Load model')
-        print('  6) Plot model graph')
+        print('  3) Visualize data')
+        print('  4) Load model')
+        print('  5) Plot model graph')
+        print('  6) Evaluate model')
         print('  7) Train model')
-        print('  8) Exit')
+        print('  8) Predict with model')
+        print('  9) Exit')
         choice = input('Enter number: ')
 
         if choice == '1':
-            pass
+            print(f'Available networks: {[ key for key in nets.keys()]}')
+            netchoice = input('Choose net: ')
+            
+            if netchoice in nets:
+                print(f'Available models: {[key for key in nets[netchoice]["models"].keys()]}')
+                modelchoice = input('Choose model: ')
+                if modelchoice in nets[netchoice]['models']:
+                    net_name = netchoice
+                    model_name = modelchoice
+                    base_dir, data_dir, model_dir = set_directories(net_name, model_name)
+                else:
+                    print('Invalid choice')
+            else:
+                print('Invalid choice')
+
+
         elif choice == '2':
             fname = '/'.join([model_dir, 'history.csv'])
             if os.path.isfile(fname):
@@ -135,36 +153,59 @@ def main():
                 plot_history(history)
             else:
                 print('No training history found')
+
         elif choice == '3':
-            if data_loaded:
-                print('Data already loaded')
-            else:
-                train_ds, val_ds = nets[net_name]['data_loader'](data_dir)
-                class_names = train_ds.class_names
+            if not data_loaded:
+                train_ds, val_ds, class_names = load_data(net_name, data_dir)
                 data_loaded = True
+            visualize_data(train_ds, class_names)
+
         elif choice == '4':
-            if data_loaded:
-                visualize_data(train_ds, class_names)
-            else:
-                print('No data loaded')
+            if not data_loaded:
+                train_ds, val_ds, class_names = load_data(net_name, data_dir)
+                data_loaded = True
+
+            model = nets[net_name]['models'][model_name].make_model(len(class_names))
+            model_loaded = True
+            callbacks = nets[net_name]['callbacks'](model_dir)
+            if os.path.isfile('/'.join([model_dir,'checkpoint'])):
+                model.load_weights(model_dir + '/')
+
         elif choice == '5':
-            if data_loaded:
-                model = nets[net_name]['models'][model_name].make_model(len(class_names))
-                model_loaded = True
-                callbacks = nets[net_name]['callbacks'](model_dir)
-                if os.path.isfile('/'.join([model_dir,'checkpoint'])):
-                    model.load_weights(model_dir + '/')
-                    #loss, acc = model.evaluate(val_ds, verbose=2)
-                    #print("Restored model, accuracy: {:5.2f}%".format(100 * acc))
-            else:
-                print('Load data first to determine number of classes.')
-        elif choice == '6':
             fname = '/'.join([model_dir, 'model_graph.png'])
             plot_model(model, to_file=fname, show_shapes=True)
             plt.imshow(img.imread(fname))
             plt.axis('off')
             plt.show()
+
+        elif choice == '6':
+            if data_loaded and model_loaded:
+                loss, acc = model.evaluate(val_ds, verbose=2)
+                print('Restored model, accuracy: {:5.2f}%'.format(100 * acc))
+            else:
+                print('No model loaded')
+
         elif choice == '7':
-            pass
+            epochs = input('How many epochs?')
+            history= model.fit(
+                train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE),
+                validation_data = val_ds.cache().prefetch(buffer_size=AUTOTUNE),
+                epochs = epochs,
+            callbacks=callbacks)
+
         elif choice == '8':
+            num_predictions = input('How many predictions (max 32): ')
+            valid_input = True
+            try:
+                num_predictions = int(num_predictions)
+            except ValueError:
+                valid_input = False
+
+            if  valid_input and 0 <= num_predictions <= 32:
+                predict_model = Sequential([model, Softmax()])
+                predictions(num_predictions, val_ds, predict_model, class_names)
+            else:
+                print('Invalid input')
+
+        elif choice == '9' or 'q':
             return 0
