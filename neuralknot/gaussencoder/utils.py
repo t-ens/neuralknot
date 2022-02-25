@@ -1,2 +1,2 @@
-def load_data():
+class DetectCrossings:
     pass
