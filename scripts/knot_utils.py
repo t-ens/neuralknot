@@ -3,6 +3,7 @@ import sys
 import copy
 import argparse
 import glob
+import re
 import matplotlib
 import matplotlib.pyplot as plt
 import math
@@ -122,6 +123,10 @@ def parse_name(name):
         j+=1
     return int(name[i:j])
 
+def parse_gausscode(w):
+    match = re.search( '.*?\[(.*)\]', w)
+    code = [ int(s) for s in match.groups(0)[0].split(',') ]
+
 def plot_knot(knot, name, rot=0, show=True, save=False, fname = None):
     if knot is None:
         print("The graphing algorithm aborted for this knot.")
@@ -230,6 +235,7 @@ def make_argparser():
     parser.add_argument('-lr', '--list-rejects', action='store_true')
     parser.add_argument('-gnc', '--generate-number-of-crossings', action='store_true')
     parser.add_argument('-gd', '--generate-dir', nargs=1, type=str)
+    parser.add_argument('-ggc', '--generate-gauss-codes', action='store_true')
 
     return parser
 
@@ -251,13 +257,18 @@ def main():
     with open('../../KnotTheory/dataset/knots.txt') as fd:
         all_names = fd.readlines()[:len(all_fnames)]
 
+    with open('dataset/gauss_codes.txt', 'r') as fd:
+        all_gausscodes = fd.readlines()
+
     if args.keep_rejects:
         fnames = all_fnames
         names = all_names
+        gausscodes = all_gausscodes
     else:
         selected = [ False if check_aborted(fname) else True for  fname in all_fnames ]
         fnames = [ fname for i,fname in enumerate(all_fnames) if selected[i] ]
         names = [ name for i,name in enumerate(all_names) if selected[i] ]
+        gausscodes = [ gc for i,gc in enumerate(all_gausscodes) if selected[i] ]
         #print(f"Mathematica Graphics objects found: {len(fnames)}") 
 
     if isinstance(args.first_file, list):
@@ -330,6 +341,43 @@ def main():
                 
         with open(sdir + "names.txt", 'a+') as fd:
             fd.writelines( [ name + '\n' for name in name_list ])
+
+    if args.generate_gauss_codes:
+        if args.generate_dir is None:
+            sdir = '../neuralknot/gaussencoder/dataset/'
+
+        total_num = 10000
+        num_crossings = [ parse_name(name) for name in names ] 
+        crossing_dict = dict([ (i, 0) for i in set(num_crossings) ]) 
+        for num in num_crossings:
+            crossing_dict[num] += 1
+
+        numperclass = total_num // len(crossing_dict) + 1
+        rotation_dict = dict( [ (i, numperclass // crossing_dict[i]) for i in crossing_dict.keys()])
+
+
+        image_base_dir = '/'.join([sdir, 'images'])
+        num = 0
+        name_list = []
+        gauss_code_list = []
+        for i,knot in  enumerate(knots):
+            if not os.path.isdir(image_base_dir):
+                os.mkdir(image_base_dir)
+            for angle in np.linspace(0, 360, num=rotation_dict[num_crossings[i]], endpoint=False):
+                #knotc = copy.deepcopy(knot) #Matplotlib can only attach a given artist to one figure
+                name_list.append(names[i])
+                gauss_code_list.append(gausscodes[i])
+                num_zeros = 7-len(str(num))
+                fname = '/'.join([image_base_dir, num_zeros*'0' + str(num) + '.png'])
+                #plot_knot(knotc, names[i], rot=angle, show=False, save=True, fname=fname)
+                #plt.close('all')
+                num += 1
+                
+        with open(sdir + "names.txt", 'a+') as fd:
+            fd.writelines( [ name for name in name_list ])
+
+        with open(sdir+'gauss_codes.txt', 'a+') as fd:
+            fd.writelines( [ gc for gc in gauss_code_list ])
 
 if __name__ == '__main__':
     main()

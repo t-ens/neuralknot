@@ -4,6 +4,9 @@
 # Don't track datasets
 dataset/
 
+#
+KnotTheory/
+
 # Python bytecode files
 *.pyc
 __pycache__/

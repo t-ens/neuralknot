@@ -1,0 +1,140 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 13.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[      5736,        132]
+NotebookOptionsPosition[      5034,        113]
+NotebookOutlinePosition[      5504,        131]
+CellTagsIndexPosition[      5461,        128]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"SetDirectory", "[", 
+   RowBox[{"NotebookDirectory", "[", "]"}], "]"}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{"<<", "KnotTheory`"}]}], "Input",
+ CellChangeTimes->{{3.854052502501915*^9, 3.8540525030832653`*^9}, {
+  3.854827365915167*^9, 3.85482737996003*^9}, {3.854827421753049*^9, 
+  3.854827421816003*^9}, {3.854827478489127*^9, 3.854827480584944*^9}, {
+  3.8548276442832212`*^9, 3.854827644665428*^9}},
+ CellLabel->"In[1]:=",ExpressionUUID->"84daf610-5e1f-42d8-a695-36e6e343ec25"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"L", "=", 
+   RowBox[{"AllKnots", "[", 
+    RowBox[{"{", 
+     RowBox[{"1", ",", "16"}], "}"}], "]"}]}], ";"}]], "Input",
+ CellChangeTimes->{{3.854053581732415*^9, 3.854053581988249*^9}, {
+  3.854053671974175*^9, 3.8540536736527777`*^9}, {3.854053741206266*^9, 
+  3.8540537413815107`*^9}, {3.854054421371148*^9, 3.854054429674612*^9}, {
+  3.854054477978792*^9, 3.8540544931627607`*^9}, {3.854122451662147*^9, 
+  3.8541225354688683`*^9}, {3.854122613276545*^9, 3.85412261335606*^9}, {
+  3.854122655420311*^9, 3.854122655595784*^9}},
+ CellLabel->"In[3]:=",ExpressionUUID->"6502e9b2-72bd-4230-b61d-5c8e770153ae"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"Export", "[", 
+    RowBox[{"\"\<dataset/knots.txt\>\"", ",", " ", "L"}], "]"}], ";"}], 
+  " "}], "\[IndentingNewLine]", 
+ RowBox[{"Export", "[", 
+  RowBox[{"\"\<dataset/gauss_codes.txt\>\"", ",", " ", 
+   RowBox[{"GaussCode", "/@", " ", 
+    RowBox[{"L", "[", 
+     RowBox[{"[", 
+      RowBox[{"1", ";;", "801"}], "]"}], "]"}]}]}], "]"}]}], "Input",
+ CellChangeTimes->{{3.85405438338798*^9, 3.854054417066934*^9}, 
+   3.854054490138921*^9, {3.8541531489536457`*^9, 3.85415317245739*^9}, {
+   3.8548295482749043`*^9, 3.854829591299096*^9}},
+ CellLabel->"In[4]:=",ExpressionUUID->"57cb8e1a-1297-4a8e-98e3-9a4499cc5682"],
+
+Cell[BoxData[
+ RowBox[{"For", "[", "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"i", "=", " ", "802"}], ",", "\[IndentingNewLine]", 
+   RowBox[{"i", " ", "<=", " ", 
+    RowBox[{"Length", "[", "L", "]"}]}], ",", "\[IndentingNewLine]", 
+   RowBox[{"i", " ", "=", " ", 
+    RowBox[{"i", "+", "1"}]}], ",", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{"zeros", " ", "=", " ", 
+     RowBox[{"7", "-", 
+      RowBox[{"StringLength", "[", 
+       RowBox[{"ToString", "[", "i", "]"}], "]"}]}]}], ";", 
+    "\[IndentingNewLine]", 
+    RowBox[{"name", " ", "=", " ", 
+     RowBox[{"\"\<dataset/objects/\>\"", "<>", 
+      RowBox[{"StringRepeat", "[", 
+       RowBox[{"\"\<0\>\"", ",", " ", "zeros"}], "]"}], "<>", " ", 
+      RowBox[{"ToString", "[", "i", "]"}]}]}], ";", "\[IndentingNewLine]", 
+    RowBox[{"G", " ", "=", " ", 
+     RowBox[{"TimeConstrained", "[", 
+      RowBox[{
+       RowBox[{"DrawPD", "[", 
+        RowBox[{"L", "[", 
+         RowBox[{"[", "i", "]"}], "]"}], "]"}], ",", " ", 
+       RowBox[{"5", "*", "60"}]}], "]"}]}], ";", "\[IndentingNewLine]", 
+    RowBox[{"Put", "[", 
+     RowBox[{"G", ",", " ", "name"}], "]"}]}]}], "\[IndentingNewLine]", 
+  "]"}]], "Input",
+ CellChangeTimes->{{3.854045072262685*^9, 3.8540450877498293`*^9}, {
+   3.8540451697823544`*^9, 3.8540452480548067`*^9}, 3.854045531784713*^9, {
+   3.8540526335243797`*^9, 3.854052642244137*^9}, {3.854052909361724*^9, 
+   3.854053012435781*^9}, {3.854053314996035*^9, 3.8540533150576878`*^9}, {
+   3.8540533934427834`*^9, 3.8540533979550333`*^9}, {3.85405343000392*^9, 
+   3.85405346897902*^9}, {3.854053503172667*^9, 3.8540535032675447`*^9}, {
+   3.854053547653556*^9, 3.854053578244307*^9}, {3.854054380060418*^9, 
+   3.854054382651586*^9}, {3.8540545339786243`*^9, 3.854054573162622*^9}, {
+   3.8540556157600727`*^9, 3.8540556201753063`*^9}, {3.8540561500051517`*^9, 
+   3.8540561501156397`*^9}, {3.85405630771789*^9, 3.854056307781416*^9}, {
+   3.85405645237255*^9, 3.854056480579583*^9}, {3.8541040897067747`*^9, 
+   3.8541040990827227`*^9}, {3.854122419250125*^9, 3.854122422285864*^9}, {
+   3.8541227547959547`*^9, 3.854122842636771*^9}, {3.854122888957342*^9, 
+   3.854122987869701*^9}, {3.8541233748798532`*^9, 3.854123403200362*^9}, 
+   3.8541235059856997`*^9, {3.854123629730907*^9, 3.854123633650424*^9}, {
+   3.854123703747035*^9, 3.8541237707555017`*^9}, {3.854123869652474*^9, 
+   3.854123873811749*^9}, {3.854123948436105*^9, 3.8541240027082767`*^9}, {
+   3.854153103449855*^9, 3.854153126777391*^9}, {3.8541532036419373`*^9, 
+   3.854153203977848*^9}},
+ CellLabel->"In[5]:=",ExpressionUUID->"26767c77-51f8-46dc-a8d6-20ed24f5fbdb"]
+},
+WindowSize->{717., 790.5},
+WindowMargins->{{Automatic, 1.5}, {1.5, Automatic}},
+TaggingRules-><|"TryRealOnly" -> False|>,
+Magnification:>0.8 Inherited,
+FrontEndVersion->"13.0 for Linux x86 (64-bit) (December 2, 2021)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"c23a9285-f772-40c7-929d-778392f88cd0"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 524, 10, 41, "Input",ExpressionUUID->"84daf610-5e1f-42d8-a695-36e6e343ec25"],
+Cell[1085, 32, 643, 12, 23, "Input",ExpressionUUID->"6502e9b2-72bd-4230-b61d-5c8e770153ae"],
+Cell[1731, 46, 665, 15, 40, "Input",ExpressionUUID->"57cb8e1a-1297-4a8e-98e3-9a4499cc5682"],
+Cell[2399, 63, 2631, 48, 157, "Input",ExpressionUUID->"26767c77-51f8-46dc-a8d6-20ed24f5fbdb"]
+}
+]
+*)
+
