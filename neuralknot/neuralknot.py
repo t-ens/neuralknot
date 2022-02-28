@@ -3,6 +3,7 @@ from tensorflow.config.threading import set_inter_op_parallelism_threads
 
 from neuralknot.numcrossings.blockconv import BlockModel
 from neuralknot.numcrossings.fullconv import FullConv
+from neuralknot.gaussencoder.simpleGRU import SimpleGRU
 
 set_intra_op_parallelism_threads(8)
 set_inter_op_parallelism_threads(8) 
@@ -18,7 +19,7 @@ def main():
     """
     
     current_model = BlockModel()
-    
+
     while True:
         print(f'Selected Model: {current_model._net_name}:{current_model._model_name}') 
         print('Options:')

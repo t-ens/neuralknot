@@ -124,12 +124,20 @@ def parse_name(name):
     return int(name[i:j])
 
 def parse_gausscode(w):
+    """
+        Return just the Gausscode as a string in the format
+         '[int_1, int_2, ..., int_n]'
+         from KnotTheory output
+    """
     match = re.search( '.*?\[(.*)\]', w)
-    code = [ int(s) for s in match.groups(0)[0].split(',') ]
+    gc = '[' + match.groups(0)[0] + ']'
+    gc.rstrip()
+    return gc.rstrip().replace(' ', '')
+
 
 def plot_knot(knot, name, rot=0, show=True, save=False, fname = None):
     if knot is None:
-        print("The graphing algorithm aborted for this knot.")
+        print('The graphing algorithm aborted for this knot.')
         return
 
     fig, ax = plt.subplots()
@@ -158,6 +166,14 @@ def plot_knot(knot, name, rot=0, show=True, save=False, fname = None):
         return fig,ax
 
 def find_gaps(knot, num, tol1=0, tol2=0.07, iter=0):
+    """
+        Finds all crossing locations in a knot if possible. knot should be in
+        the form of a matplotlib graphics object as output by read_object() and
+        num should be the total number of crossings in the diagram (which can be
+        extracted from the name of the knot
+    """
+
+
     max_iter = 10000
     step = 0.001
     vertices = []
@@ -220,7 +236,8 @@ def make_argparser():
     desc = """
         A set of functions to parse the Mathematica graphics object output by
         the DrawPD routine from the KnotTheory mathematica package into a series
-        of Matplotlib patches.
+        of Matplotlib patches and to create various datasets out of the
+        diagrams.
            """
     parser = argparse.ArgumentParser(
                         prog='qutebrowser',
@@ -238,9 +255,6 @@ def make_argparser():
     parser.add_argument('-ggc', '--generate-gauss-codes', action='store_true')
 
     return parser
-
-def flip_knot():
-    pass
 
 def main():
     parser = make_argparser()
@@ -344,40 +358,36 @@ def main():
 
     if args.generate_gauss_codes:
         if args.generate_dir is None:
-            sdir = '../neuralknot/gaussencoder/dataset/'
+            sdir = '../neuralknot/gaussencoder/dataset2/'
 
-        total_num = 10000
-        num_crossings = [ parse_name(name) for name in names ] 
-        crossing_dict = dict([ (i, 0) for i in set(num_crossings) ]) 
-        for num in num_crossings:
-            crossing_dict[num] += 1
-
-        numperclass = total_num // len(crossing_dict) + 1
-        rotation_dict = dict( [ (i, numperclass // crossing_dict[i]) for i in crossing_dict.keys()])
-
+        if not os.path.isdir(sdir):
+            os.mkdir(sdir)
 
         image_base_dir = '/'.join([sdir, 'images'])
+        if not os.path.isdir(image_base_dir):
+            os.mkdir(image_base_dir)
+
         num = 0
-        name_list = []
-        gauss_code_list = []
-        for i,knot in  enumerate(knots):
-            if not os.path.isdir(image_base_dir):
-                os.mkdir(image_base_dir)
-            for angle in np.linspace(0, 360, num=rotation_dict[num_crossings[i]], endpoint=False):
-                #knotc = copy.deepcopy(knot) #Matplotlib can only attach a given artist to one figure
-                name_list.append(names[i])
-                gauss_code_list.append(gausscodes[i])
-                num_zeros = 7-len(str(num))
-                fname = '/'.join([image_base_dir, num_zeros*'0' + str(num) + '.png'])
-                #plot_knot(knotc, names[i], rot=angle, show=False, save=True, fname=fname)
-                #plt.close('all')
-                num += 1
+        for i,knot in enumerate(knots):
+            if find_gaps(knot, parse_name(names[i])) is not None:
+                full_gc = parse_gausscode(gausscodes[i])
+                for j in range(1, len(full_gc)):
+                    text_input = full_gc[:j]
+                    label = full_gc[j]
+                    knotc = copy.deepcopy(knot) #Matplotlib can only attach a given artist to one figure
+
+                    with open(sdir + 'names.txt', 'a+') as fd:
+                        fd.write(names[i].rstrip() + '\n')
+                    with open(sdir+'text_input.txt', 'a+') as fd:
+                        fd.write(text_input + '\n')
+                    with open(sdir+'labels.txt', 'a+') as fd:
+                        fd.writelines(label + '\n')
+
+                    num_zeros = 7-len(str(num))
+                    fname = '/'.join([image_base_dir, num_zeros*'0' + str(num) + '.png'])
+                    plot_knot(knotc, names[i], show=False, save=True, fname=fname)
+                    plt.close('all')
+                    num += 1
                 
-        with open(sdir + "names.txt", 'a+') as fd:
-            fd.writelines( [ name for name in name_list ])
-
-        with open(sdir+'gauss_codes.txt', 'a+') as fd:
-            fd.writelines( [ gc for gc in gauss_code_list ])
-
 if __name__ == '__main__':
     main()
