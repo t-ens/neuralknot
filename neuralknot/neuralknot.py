@@ -18,12 +18,12 @@ def main():
     and train models
     """
     
-    current_model = BlockModel()
+    current_model = SimpleGRU()
 
     while True:
         print(f'Selected Model: {current_model._net_name}:{current_model._model_name}') 
         print('Options:')
-        print('  1) Change model')
+        print('  1) Select model')
         print('  2) Plot model history')
         print('  3) Visualize data')
         print('  4) Plot model graph')
@@ -37,12 +37,15 @@ def main():
             print('Available networks:')
             print('  1) blockconv (numcrossings)')
             print('  2) fullconv (numcrossings)')   
+            print('  3) simpleGRU (gaussencoder)')
             selection = input('Choice: ')
 
             if selection == '1':
                 current_model = BlockModel()
             elif selection == '2':
                 current_model = FullConv()
+            elif selection == '3':
+                current_model = SimpleGRU
             
         elif choice == '2':
             current_model.plot_history()

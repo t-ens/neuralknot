@@ -105,8 +105,6 @@ class GaussEncoder:
         return train_ds, val_ds
 
     def plot_model(self):
-        if not os.path.isdir(self._model_dir):
-            os.mkdir(self._model_dir)
         fname = '/'.join([self._model_dir, 'model_graph.png'])
         keras_plot_model(self.model, to_file=fname, show_shapes=True)
         plt.imshow(img.imread(fname))

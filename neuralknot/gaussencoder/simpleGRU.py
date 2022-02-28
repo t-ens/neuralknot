@@ -1,3 +1,4 @@
+import os
 import glob
 import numpy as np
 
@@ -21,10 +22,10 @@ from neuralknot.gaussencoder.common import GaussEncoder
 class SimpleGRU(GaussEncoder):
     """
         This model follows the approach described in the paper "Show and Tell: A
-        nerual Image Caption Generator" to convert an image to a sequence. An
-        element of the dataset is an image and a partial Gauss code. Each
+        Neural Image Caption Generator" to convert an image to a sequence. An
+        element of the dataset is an image and a partial Gauss code. Each such
         datapoint is labelled by the next character in the Gauss code.
-        Convolution layers are perfored on the image, and the resulting vector
+        Convolution layers are performed on the image, and the resulting vector
         initializes the hidden state of the GRU layer. The partial Gauss code is
         then fed through the GRU layers to predict the output character. 
     """
@@ -33,6 +34,9 @@ class SimpleGRU(GaussEncoder):
 
         super().__init__()
         self._model_dir = '/'.join([self._base_dir, f'{self._model_name}_data'])
+        if not os.path.isdir(self._model_dir):
+            os.mkdir(self._model_dir)
+
         
         self.model = self._make_model()
         self.load_weights()

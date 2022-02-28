@@ -49,31 +49,31 @@ class NumCrossings:
         
         return train_ds, val_ds 
 
-    def get_training_sessions(self, model_dir):
-        sessions = glob.glob('/'.join([model_dir, 'session_*']))
+    def get_training_sessions(self):
+        sessions = glob.glob('/'.join([self._model_dir, 'session_*']))
         return [ int(session.split('_')[-1]) for session in sessions ]
 
-    def load_weights(self, model_dir, model, mode = 'latest'):
+    def load_weights(self, mode = 'latest'):
         if mode == 'latest':
             try:
-                num = max(self.get_training_sessions(model_dir))
+                num = max(self.get_training_sessions())
             except ValueError:
                 print('No previous training sessions found')
                 return 
-            save_dir = '/'.join([model_dir, f'session_{int(num)}'])
+            save_dir = '/'.join([self._model_dir, f'session_{int(num)}'])
 
         if os.path.isfile('/'.join([save_dir,'checkpoint'])):
-            model.load_weights(save_dir + '/')
+            self.model.load_weights(save_dir + '/')
         else:
             print('Weights could not be loaded.')
 
-    def update_callbacks(self, model_dir):
-        sessions = self.get_training_sessions(model_dir)
+    def update_callbacks(self):
+        sessions = self.get_training_sessions()
         try:
             next_session = max(sessions) + 1
         except ValueError:
             next_session = 0
-        save_dir = '/'.join([model_dir, f'session_{next_session}/'])
+        save_dir = '/'.join([self.model_dir, f'session_{next_session}/'])
 
         checkpoint = ModelCheckpoint(      
             filepath = save_dir,
@@ -87,15 +87,16 @@ class NumCrossings:
     
         return [checkpoint, history_logger]
 
-    def train_model(self, epochs, model, callbacks):
-        history= model.fit(
+    def train_model(self, epochs):
+        callbacks = self.update_callbacks()
+        history= self.model.fit(
                 self.train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE),
                 validation_data = self.val_ds.cache().prefetch(buffer_size=AUTOTUNE),
                 epochs = epochs,
                 callbacks = callbacks)
 
-    def plot_history(self, model_dir):
-        fnames = glob.glob( '/'.join([model_dir, 'session_?', 'history.csv']))
+    def plot_history(self):
+        fnames = glob.glob( '/'.join([self._model_dir, 'session_?', 'history.csv']))
         fnames.sort(
             key= lambda w:  int(re.search('.*?session\_(.*)\/.*', w).groups(0)[0]))
     
@@ -127,22 +128,22 @@ class NumCrossings:
                 plt.axis('off')
         plt.show()
         
-    def plot_model(self, model, model_dir):
-        fname = '/'.join([model_dir, 'model_graph.png'])
-        keras_plot_model(model, to_file=fname, show_shapes=True)
+    def plot_model(self):
+        fname = '/'.join([self._model_dir, 'model_graph.png'])
+        keras_plot_model(self.model, to_file=fname, show_shapes=True)
         plt.imshow(img.imread(fname))
         plt.axis('off')
         plt.show()
 
-    def evaluate_model(self, model):
-        loss, acc = model.evaluate(self.val_ds, verbose=2)
+    def evaluate_model(self):
+        loss, acc = self.model.evaluate(self.val_ds, verbose=2)
         print('Restored model, accuracy: {:5.2f}%'.format(100 * acc))
 
-    def predict(self, num, model):
-        predict_model = Sequential([model, Softmax()])
+    def predict(self, num):
+        predict_model = Sequential([self.model, Softmax()])
 
         for images, labels in self.val_ds.take(1):    
-            predictions = model.predict(images)    
+            predictions = self.model.predict(images)    
             for i in range(num):    
         
                 plt.figure()    
