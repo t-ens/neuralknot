@@ -8,17 +8,12 @@ from neuralknot.gaussencoder.simpleGRU import SimpleGRU
 set_intra_op_parallelism_threads(8)
 set_inter_op_parallelism_threads(8) 
 
-def load_data(net_name, data_dir):
-    train_ds, val_ds = nets[net_name]['data_loader'](data_dir)
-    class_names = train_ds.class_names
-    return train_ds, val_ds, class_names
-
 def main():
     """Very simple interactive loop to load data and models, visualize either
     and train models
     """
     
-    current_model = SimpleGRU()
+    current_model = BlockModel()
 
     while True:
         print(f'Selected Model: {current_model._net_name}:{current_model._model_name}') 
@@ -45,7 +40,7 @@ def main():
             elif selection == '2':
                 current_model = FullConv()
             elif selection == '3':
-                current_model = SimpleGRU
+                current_model = SimpleGRU()
             
         elif choice == '2':
             current_model.plot_history()
@@ -60,7 +55,7 @@ def main():
             current_model.evaluate_model()
 
         elif choice == '6':
-            epochs = input('How many epochs?')
+            epochs = input('How many epochs? ')
             try:
                 epochs = int(epochs)
             except ValueError:

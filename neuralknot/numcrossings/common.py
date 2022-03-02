@@ -7,11 +7,19 @@ from tensorflow.keras.preprocessing import image_dataset_from_directory
 
 from tensorflow.data import AUTOTUNE
 
-from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger
 from tensorflow.keras.layers import Softmax
 from tensorflow.keras.models import Sequential
 
 from neuralknot.common import KnotModel
+
+#AMD docker image specific imports#############################################
+from neuralknot import AMD_CHECK
+if AMD_CHECK:
+    from tensorflow.keras.preprocessing import image_dataset_from_directory
+else:
+    from tensorflow.keras.utils import image_dataset_from_directory
+###############################################################################
+
 
 class NumCrossings(KnotModel):
     def __init__(self):

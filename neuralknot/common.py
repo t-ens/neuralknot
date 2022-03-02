@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.image as img
 
 from tensorflow.keras.utils import plot_model as keras_plot_model
+from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger
 from tensorflow.train import latest_checkpoint
 
 class KnotModel:
@@ -47,17 +48,19 @@ class KnotModel:
                 df = pd.read_csv(fname)
                 history = pd.concat([history, df], axis=0, ignore_index=True)
 
-        plt.figure()
-        plt.plot(history['loss'], 'b')
-        plt.plot(history['val_loss'], 'g')
-        plt.legend(['loss', 'val_loss'])
+            plt.figure()
+            plt.plot(history['loss'], 'b')
+            plt.plot(history['val_loss'], 'g')
+            plt.legend(['loss', 'val_loss'])
 
-        plt.figure()
-        plt.plot(history['accuracy'], 'b')
-        plt.plot(history['val_accuracy'], 'g')
-        plt.legend(['acc', 'val_acc'])
+            plt.figure()
+            plt.plot(history['accuracy'], 'b')
+            plt.plot(history['val_accuracy'], 'g')
+            plt.legend(['acc', 'val_acc'])
 
-        plt.show()
+            plt.show()
+        else: 
+            print("No training history found")
 
     def plot_model(self):
         fname = '/'.join([self._model_dir, 'model_graph.png'])
@@ -72,10 +75,12 @@ class KnotModel:
             next_session = max(sessions) + 1
         except ValueError:
             next_session = 0
-        save_dir = '/'.join([self._model_dir, f'session_{next_session}/'])
+        save_dir = '/'.join([self._model_dir, f'session_{next_session}'])
+        if not os.path.isdir(save_dir):
+            os.mkdir(save_dir)
 
         checkpoint = ModelCheckpoint(      
-            filepath = save_dir + 'cp-{epoch:04d}.ckpt',
+            filepath = '/'.join([save_dir, 'cp-{epoch:04d}.ckpt']),
             save_weights_only=True,      
             verbose = 1)
     

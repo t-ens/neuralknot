@@ -3,19 +3,27 @@ import re
 
 import matplotlib.pyplot as plt
 
-from tensorflow.keras.preprocessing import image_dataset_from_directory
+
+
 from tensorflow.ragged import stack
 from tensorflow.data import Dataset
 from tensorflow.data import AUTOTUNE
 from tensorflow.strings import unicode_split
 
-from tensorflow.keras.layers import StringLookup
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger
-from tensorflow.train import latest_checkpoint
-
 from neuralknot.common import KnotModel
+
+#AMD docker image specific imports#############################################
+from neuralknot import AMD_CHECK
+if AMD_CHECK:
+    from tensorflow.keras.preprocessing import image_dataset_from_directory
+    from tensorflow.python.keras.layers.preprocessing.string_lookup import StringLookup
+else:
+    from tensorflow.keras.utils import image_dataset_from_directory
+    from tensorflow.keras.layers import StringLookup
+###############################################################################
+
 
 class GaussEncoder(KnotModel):
     """
@@ -29,7 +37,7 @@ class GaussEncoder(KnotModel):
         self._base_dir = '/'.join(['neuralknot', self._net_name])
         self._data_dir = '/'.join([self._base_dir, 'dataset'])
             
-        # '*' is a padding character. '[' marks the beginning of a gauss code
+        # '@' is a padding character. '[' marks the beginning of a gauss code
         # and ']' marks the end. Everything else is either an integer, a minus
         # sign or a comma
 

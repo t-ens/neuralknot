@@ -12,6 +12,15 @@ from tensorflow.keras.losses import SparseCategoricalCrossentropy
 
 from neuralknot.numcrossings.common import NumCrossings
 
+#AMD docker image specific imports#############################################
+from neuralknot import AMD_CHECK
+if AMD_CHECK:
+    from tensorflow.keras.layers.experimental.preprocessing import Rescaling
+else:
+    from tensorflow.keras.layers import Rescaling
+###############################################################################
+
+
 class FullConv(NumCrossings):
     def __init__(self):
         self._model_name = 'fullconv'
