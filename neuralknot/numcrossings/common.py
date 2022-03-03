@@ -57,18 +57,18 @@ class NumCrossings(KnotModel):
         predict_model = Sequential([self.model, Softmax()])
 
         for images, labels in self.val_ds.take(1):    
-            predictions = self.model.predict(images)    
+            predictions = predict_model.predict(images)    
             for i in range(num):    
         
                 plt.figure()    
         
                 plt.subplot(2,2,1)    
                 plt.imshow(images[i].numpy().astype("uint8"))    
-                plt.title(self.class_names[labels[i]])    
+                plt.title(f'Number of Crossings: {self.class_names[labels[i]]}')    
                 plt.axis('off')    
          
                 plt.subplot(2,2,2)    
-                plt.bar(range(len(self.class_names)), predictions[i])    
+                plt.bar(range(1,len(self.class_names)+1), predictions[i])    
          
                 max_inds = np.argpartition(predictions[i], -3)[-3:]    
                 max_ind = np.argmax(predictions[i])    
@@ -78,7 +78,7 @@ class NumCrossings(KnotModel):
                     else:    
                         colour = 'g'    
                     plt.text(
-                            j, 
+                            j+1, 
                             predictions[i][j], 
                             self.class_names[j], 
                             c=colour, 
