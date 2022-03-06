@@ -33,8 +33,20 @@ class Blocks(Layer):
                     (batch_size, self.size, self.size, num))
 
 class BlockModel(NumCrossings):
+    """
+    This model counts the number of crossings by breaking the image into blocks
+    of various sizes, doing convolution/pooling on each block then combining the
+    result from each block in dense layers
+    """
     def __init__(self):
         self._model_name = 'blockconv'
+        self.__desc__ =  \
+            """This model counts the number of crossings \n\
+by breaking the image into blocks of various \n\
+sizes, doing convolution/pooling on each \n\
+block then combining the result from each \n\
+block in dense layer"""
+
 
         super().__init__()
         self._model_dir = '/'.join([self._base_dir, f'{self._model_name}_data'])

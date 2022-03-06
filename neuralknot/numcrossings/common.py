@@ -84,16 +84,12 @@ class NumCrossings(KnotModel):
                             c=colour, 
                             rotation='45', 
                             fontsize='x-small')    
-                    
                 plt.show()
 
-    def visualize_data(self, num=9):
-        plt.figure()
+    def visualize_data(self, axes, num=9):
         for images,labels in self.train_ds.take(1):
             for i in range(num):
-                ax = plt.subplot(3,3,i+1)
-                plt.imshow(images[i].numpy().astype("uint8"))
-                plt.title(self.class_names[labels[i].numpy().astype("uint8")])
-                plt.axis('off')
-        plt.show()
-
+                axes[i].imshow(images[i].numpy().astype("uint8"))
+                axes[i].set_title(self.class_names[labels[i].numpy().astype("uint8")])
+                axes[i].axes.get_xaxis().set_visible(False)
+                axes[i].axes.get_yaxis().set_visible(False)

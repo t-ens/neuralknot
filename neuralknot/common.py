@@ -37,7 +37,7 @@ class KnotModel:
         else:
             print('Weights could not be loaded.')
 
-    def plot_history(self):
+    def plot_history(self, axes):
         fnames = glob.glob( '/'.join([self._model_dir, 'session_?', 'history.csv']))
         fnames.sort(
             key= lambda w:  int(re.search('.*?session\_(.*)\/.*', w).groups(0)[0]))
@@ -48,26 +48,23 @@ class KnotModel:
                 df = pd.read_csv(fname)
                 history = pd.concat([history, df], axis=0, ignore_index=True)
 
-            plt.figure()
-            plt.plot(history['loss'], 'b')
-            plt.plot(history['val_loss'], 'g')
-            plt.legend(['loss', 'val_loss'])
+            axes[0].plot(history['loss'], 'b')
+            axes[0].plot(history['val_loss'], 'g')
+            axes[0].legend(['loss', 'val_loss'])
 
-            plt.figure()
-            plt.plot(history['accuracy'], 'b')
-            plt.plot(history['val_accuracy'], 'g')
-            plt.legend(['acc', 'val_acc'])
+            axes[1].plot(history['accuracy'], 'b')
+            axes[1].plot(history['val_accuracy'], 'g')
+            axes[1].legend(['acc', 'val_acc'])
 
-            plt.show()
         else: 
             print("No training history found")
 
-    def plot_model(self):
+    def plot_model(self, axes):
         fname = '/'.join([self._model_dir, 'model_graph.png'])
         keras_plot_model(self.model, to_file=fname, show_shapes=True)
-        plt.imshow(img.imread(fname))
-        plt.axis('off')
-        plt.show()
+        axes[0].imshow(img.imread(fname))
+        axes[0].axes.get_xaxis().set_visible(False)
+        axes[0].axes.get_yaxis().set_visible(False)
 
     def update_callbacks(self):
         sessions = self.get_training_sessions()
@@ -100,6 +97,5 @@ class KnotModel:
                 callbacks=callbacks)
 
     def evaluate_model(self):
-        loss, acc = self.model.evaluate(self.val_ds, verbose=2)
-        print('Restored model, accuracy: {:5.2f}%'.format(100 * acc))
-
+        self.loss, self.acc = self.model.evaluate(self.val_ds, verbose=2)
+        print('Restored model, accuracy: {:5.2f}%'.format(100 * self.acc))

@@ -1,5 +1,11 @@
+import sys
+
+from PySide6.QtWidgets import QApplication
+
 from tensorflow.config.threading import set_intra_op_parallelism_threads
 from tensorflow.config.threading import set_inter_op_parallelism_threads
+
+from neuralknot.qtgui.mainwindow import MainWindow
 
 from neuralknot.numcrossings.blockconv import BlockModel
 from neuralknot.numcrossings.fullconv import FullConv
@@ -8,7 +14,7 @@ from neuralknot.gaussencoder.simpleGRU import SimpleGRU
 set_intra_op_parallelism_threads(8)
 set_inter_op_parallelism_threads(8) 
 
-def main():
+def main_cli():
     """Very simple interactive loop to load data and models, visualize either
     and train models
     """
@@ -78,3 +84,13 @@ def main():
 
         elif choice == '9' or 'q':
             return 0
+
+def main_qt():
+    app = QApplication(sys.argv)
+    win = MainWindow()
+    win.menuBar()
+    win.show()
+    return app.exec()
+
+def main():
+    return main_qt()

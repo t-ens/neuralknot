@@ -31,6 +31,13 @@ class SimpleGRU(GaussEncoder):
     """
     def __init__(self):
         self._model_name = 'simplegru'
+        self.__desc__ =  \
+            """This model computes the Gauss code of \n\
+a knot diagram by performing blockwise \n\
+convolution/pooling then feeding the  \n\
+result as the initial state to GRU cells \n\
+which predict the next character in the \n\
+Gauss code thought of as a string"""
 
         super().__init__()
         self._model_dir = '/'.join([self._base_dir, f'{self._model_name}_data'])

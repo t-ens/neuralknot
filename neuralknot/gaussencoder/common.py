@@ -107,3 +107,15 @@ class GaussEncoder(KnotModel):
                     .prefetch(buffer_size=AUTOTUNE))
 
         return train_ds, val_ds
+
+    def visualize_data(self, axes, num=9):
+        for (images, text), labels in self.train_ds.take(1):
+            for i in range(num):
+                gauss_code = ''.join([ char.decode('utf-8') for char in self._to_char(text[i]).numpy().tolist()])
+                label = self._to_char(labels[i]).numpy().decode('utf-8')
+
+                axes[i].imshow(images[i].numpy().astype("uint8"))
+                axes[i].set_title(gauss_code, fontsize=7)
+                axes[i].axes.get_xaxis().set_visible(False)
+                axes[i].axes.get_yaxis().set_visible(False)
+                axes[i].text(180, 560, f'Label: {label}')

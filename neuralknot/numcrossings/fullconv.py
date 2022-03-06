@@ -24,6 +24,12 @@ else:
 class FullConv(NumCrossings):
     def __init__(self):
         self._model_name = 'fullconv'
+        self.__desc__ =  \
+            """This model counts the number of crossings \n\
+by doing convolution/pooling on the whole \n\
+image then running the result through \n\
+dense layers"""
+
 
         super().__init__()
         self._model_dir = '/'.join([self._base_dir, f'{self._model_name}_data'])
