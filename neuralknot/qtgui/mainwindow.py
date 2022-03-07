@@ -13,6 +13,7 @@ from matplotlib.figure import Figure
 from neuralknot.numcrossings.fullconv import FullConv
 from neuralknot.numcrossings.blockconv import BlockModel
 from neuralknot.gaussencoder.simpleGRU import SimpleGRU
+from neuralknot.gaussencoder.doublebiGRU import DoubleBiGRU
 
 class MatplotCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100, num=1):
@@ -83,6 +84,7 @@ class MainWindow(QMainWindow):
         self.loadFullModel = QAction("&Full Convolution Model", self)
         self.loadBlockModel = QAction("&Block Convolution Model", self)
         self.loadSimpleGRUModel = QAction("&Simple GRU Model", self)
+        self.loadDoubleBiGRUModel = QAction("&Double Bidirectional GRU Model", self)
 
     def _createMenuBar(self):
         menuBar = self.menuBar()
@@ -97,12 +99,14 @@ class MainWindow(QMainWindow):
         loadMenu.addAction(self.loadFullModel)
         loadMenu.addAction(self.loadBlockModel)
         loadMenu.addAction(self.loadSimpleGRUModel)
+        loadMenu.addAction(self.loadDoubleBiGRUModel)
 
     def _connectActions(self):
         self.exitAction.triggered.connect(self.close)
         self.loadFullModel.triggered.connect(lambda: self.loadModel(FullConv))
         self.loadBlockModel.triggered.connect(lambda: self.loadModel(BlockModel))
         self.loadSimpleGRUModel.triggered.connect(lambda: self.loadModel(SimpleGRU))
+        self.loadDoubleBiGRUModel.triggered.connect(lambda: self.loadModel(DoubleBiGRU))
         self.trainButton.clicked.connect(
                 lambda: self.train_model(int(self.epochInput.text()))
         )

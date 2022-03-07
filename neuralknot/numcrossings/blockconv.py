@@ -57,7 +57,6 @@ block in dense layer"""
         self.load_weights()
 
     def _make_model(self, num_labels):
-    
         inputs = Input(shape=((512,512,1)))
         x = Rescaling(1./255)(inputs)
         

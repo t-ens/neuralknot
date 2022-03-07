@@ -253,6 +253,7 @@ def make_argparser():
     parser.add_argument('-gnc', '--generate-number-of-crossings', action='store_true')
     parser.add_argument('-gd', '--generate-dir', nargs=1, type=str)
     parser.add_argument('-ggc', '--generate-gauss-codes', action='store_true')
+    parser.add_argument('-ggcs', '--generate-gauss-codes-split', action='store_true')
 
     return parser
 
@@ -358,7 +359,32 @@ def main():
 
     if args.generate_gauss_codes:
         if args.generate_dir is None:
-            sdir = '../neuralknot/gaussencoder/dataset2/'
+            sdir = '../neuralknot/gaussencoder/dataset/'
+
+        if not os.path.isdir(sdir):
+            os.mkdir(sdir)
+
+        image_base_dir = '/'.join([sdir, 'images'])
+        if not os.path.isdir(image_base_dir):
+            os.mkdir(image_base_dir)
+
+        for i, knot in enumerate(knots):
+            if find_gaps(knot, parse_name(names[i])) is not None:
+                gauss_code = parse_gausscode(gausscodes[i])[1:-1]
+
+                with open(sdir + 'names.txt', 'a+') as fd:
+                    fd.write(names[i].rstrip() + '\n')
+                with open(sdir+'labels.txt', 'a+') as fd:
+                    fd.writelines(gauss_code + '\n')
+
+                num_zeros = 7-len(str(i))
+                fname = '/'.join([image_base_dir, num_zeros*'0' + str(i) + '.png'])
+                plot_knot(knot, names[i], show=False, save=True, fname=fname)
+                plt.close('all')
+
+    if args.generate_gauss_codes_split:
+        if args.generate_dir is None:
+            sdir = '../neuralknot/gaussencoder/dataset/'
 
         if not os.path.isdir(sdir):
             os.mkdir(sdir)

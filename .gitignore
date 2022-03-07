@@ -3,6 +3,7 @@
 
 # Don't track datasets
 dataset/
+dataset2/
 
 #
 KnotTheory/

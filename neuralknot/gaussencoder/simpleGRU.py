@@ -7,6 +7,9 @@ import cv2
 
 from neuralknot.numcrossings.blockconv import Blocks 
 
+from tensorflow.data import Dataset, AUTOTUNE
+from tensorflow.strings import unicode_split
+
 from tensorflow.keras import Input
 from tensorflow.keras.layers import  Layer
 from tensorflow.keras import Model
@@ -18,6 +21,16 @@ from tensorflow.keras.losses import SparseCategoricalCrossentropy
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 from neuralknot.gaussencoder.common import GaussEncoder
+
+#AMD docker image specific imports#############################################
+from neuralknot import AMD_CHECK
+if AMD_CHECK:
+    from tensorflow.keras.preprocessing import image_dataset_from_directory
+    from tensorflow.python.keras.layers.preprocessing.string_lookup import StringLookup
+else:
+    from tensorflow.keras.utils import image_dataset_from_directory
+    from tensorflow.keras.layers import StringLookup
+###############################################################################
 
 class SimpleGRU(GaussEncoder):
     """
@@ -44,7 +57,19 @@ Gauss code thought of as a string"""
         if not os.path.isdir(self._model_dir):
             os.mkdir(self._model_dir)
 
-        
+        self._data_dir = '/'.join([self._base_dir, 'dataset2'])
+        # '@' is a padding character. '[' marks the beginning of a gauss code
+        # and ']' marks the end. Everything else is either an integer, a minus
+        # sign or a comma
+        #This will allow knots with arbitrarily many crossings after training
+        #the model on some finite set of knots. The model will probably work
+        #better if the dictionary consists of of integers themselves rather than
+        #individual digits
+        self._dictionary = ['@', '-',',', '[',']'] + [ str(i) for i in range(10)]
+        self._to_num = StringLookup(vocabulary=self._dictionary, oov_token="")
+        self._to_char = StringLookup(vocabulary=self._to_num.get_vocabulary(), oov_token="", invert=True)
+
+        self.train_ds, self.val_ds = self.load_data()
         self.model = self._make_model()
         self.load_weights()
 
@@ -121,16 +146,71 @@ Gauss code thought of as a string"""
             image = cv2.resize(image, (512,512))
             batch_image =image.reshape((1,512,512,1))
 
-            output_seq =[self._to_num('[')]
-            new_out = -1
-            while (len(output_seq) < self._label_length) and ( new_out != self._to_num(']')): 
-                rnn_input = pad_sequences([output_seq], maxlen=self._label_length)
-                batch_rnn_input = np.array(rnn_input).reshape((1,self._label_length))
-                rnn_output = self.model.predict(x = (batch_image, batch_rnn_input), verbose=0)
-                new_out = np.argmax(rnn_output)
-                output_seq.append(new_out)
+    def _parse_gauss_string(self, w):
+        match = re.search( '.*?\[(.*)\]', w)
+        code = match.groups(0)[0].replace(' ', '')
+        return code
 
-            gauss_code = self._to_char(output_seq).numpy().tolist()
-            gauss_code = ''.join([ char.decode('utf-8') for char in gauss_code])
+    def load_data(self, vsplit=0.2, image_size=(512,512), batch_size=32):
+        """
+            Load data from gaussencode/dataset. This is the wrong way of doing
+            it since I am storing the same image file many time which will lead
+            to massive datasets. This should be replaced with a data generator
+            or something which will generate all the appropriate labellings from
+            a single image instead
+        """
+        image_dir = '/'.join([self._data_dir, 'images'])
 
-            return gauss_code
+        with open('/'.join([self._data_dir, 'text_input.txt']), 'r') as fd:
+            text_inputs = fd.readlines()
+        with open('/'.join([self._data_dir, 'labels.txt']), 'r') as fd:
+            labels = fd.readlines()
+
+        #Remove spaces and newline characters
+        text_inputs = [ line.replace(' ','') for line in text_inputs ]
+        text_inputs = [ line.rstrip() for line in text_inputs ]
+        #Encode using dictionary 
+        text_inputs = [ self._to_num([ch for ch in line]) for line in text_inputs ]
+        #Pad to length of longest input
+        text_inputs = pad_sequences(text_inputs)
+        self._label_length = text_inputs[0].shape[0]
+        text_ds = Dataset.from_tensor_slices(text_inputs)
+
+        labels= [ line.rstrip() for line in labels ]
+        labels  = [ self._to_num(label) for label in labels ]
+        label_ds = Dataset.from_tensor_slices(labels)
+
+        fnames = glob.glob('/'.join([image_dir, '*']))
+        num_images = len(fnames)
+        images = image_dataset_from_directory(
+                self._data_dir,
+                labels=None,
+                shuffle=False,
+                image_size=image_size,
+                batch_size=None,
+                color_mode='grayscale')
+
+        input_ds = Dataset.zip((images, text_ds))
+        full_ds = Dataset.zip((input_ds, label_ds))
+
+        val_num = round(num_images * vsplit)
+        val_ds = (full_ds.take(val_num)
+                    .padded_batch(32)
+                    .prefetch(buffer_size=AUTOTUNE))
+        train_ds = (full_ds.skip(val_num)
+                    .padded_batch(32)
+                    .prefetch(buffer_size=AUTOTUNE))
+
+        return train_ds, val_ds
+
+    def visualize_data(self, axes, num=9):
+        for (images, text), labels in self.train_ds.take(1):
+            for i in range(num):
+                gauss_code = ''.join([ char.decode('utf-8') for char in self._to_char(text[i]).numpy().tolist()])
+                label = self._to_char(labels[i]).numpy().decode('utf-8')
+
+                axes[i].imshow(images[i].numpy().astype("uint8"))
+                axes[i].set_title(gauss_code, fontsize=7)
+                axes[i].axes.get_xaxis().set_visible(False)
+                axes[i].axes.get_yaxis().set_visible(False)
+                axes[i].text(180, 560, f'Label: {label}')

@@ -3,13 +3,9 @@ import re
 
 import matplotlib.pyplot as plt
 
+from tensorflow.data import Dataset, AUTOTUNE
 
-
-from tensorflow.ragged import stack
-from tensorflow.data import Dataset
-from tensorflow.data import AUTOTUNE
-from tensorflow.strings import unicode_split
-
+from tensorflow.ragged import constant
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 from neuralknot.common import KnotModel
@@ -36,27 +32,9 @@ class GaussEncoder(KnotModel):
         
         self._base_dir = '/'.join(['neuralknot', self._net_name])
         self._data_dir = '/'.join([self._base_dir, 'dataset'])
-            
-        # '@' is a padding character. '[' marks the beginning of a gauss code
-        # and ']' marks the end. Everything else is either an integer, a minus
-        # sign or a comma
 
-        #This will allow knots with arbitrarily many crossings after training
-        #the model on some finite set of knots. The model will probably work
-        #better if the dictionary consists of of integers themselves rather than
-        #individual digits
-        self._dictionary = ['@', '-',',', '[',']'] + [ str(i) for i in range(10)]
-        self._to_num = StringLookup(vocabulary=self._dictionary, oov_token="")
-        self._to_char = StringLookup(vocabulary=self._to_num.get_vocabulary(), oov_token="", invert=True)
 
-        self.train_ds, self.val_ds = self.load_data()
-
-    def _parse_gauss_string(self, w):
-        match = re.search( '.*?\[(.*)\]', w)
-        code = match.groups(0)[0].replace(' ', '')
-        return code
-
-    def load_data(self, vsplit=0.2, image_size=(512,512), batch_size=32):
+    def load_data(self, vsplit=0.2, image_size=(512,512), batch_size=4):
         """
             Load data from gaussencode/dataset. This is the wrong way of doing
             it since I am storing the same image file many time which will lead
@@ -64,25 +42,16 @@ class GaussEncoder(KnotModel):
             or something which will generate all the appropriate labellings from
             a single image instead
         """
+        self._batch_size = batch_size
         image_dir = '/'.join([self._data_dir, 'images'])
 
-        with open('/'.join([self._data_dir, 'text_input.txt']), 'r') as fd:
-            text_inputs = fd.readlines()
         with open('/'.join([self._data_dir, 'labels.txt']), 'r') as fd:
             labels = fd.readlines()
-
-        #Remove spaces and newline characters
-        text_inputs = [ line.replace(' ','') for line in text_inputs ]
-        text_inputs = [ line.rstrip() for line in text_inputs ]
-        #Encode using dictionary 
-        text_inputs = [ self._to_num([ch for ch in line]) for line in text_inputs ]
-        #Pad to length of longest input
-        text_inputs = pad_sequences(text_inputs)
-        self._label_length = text_inputs[0].shape[0]
-        text_ds = Dataset.from_tensor_slices(text_inputs)
+        num_datapoints = len(labels)
 
         labels= [ line.rstrip() for line in labels ]
-        labels  = [ self._to_num(label) for label in labels ]
+        labels  = [ [int(num) for num in label.split(',')] for label in labels ]
+        labels = constant(labels)
         label_ds = Dataset.from_tensor_slices(labels)
 
         fnames = glob.glob('/'.join([image_dir, '*']))
@@ -95,27 +64,28 @@ class GaussEncoder(KnotModel):
                 batch_size=None,
                 color_mode='grayscale')
 
-        input_ds = Dataset.zip((images, text_ds))
-        full_ds = Dataset.zip((input_ds, label_ds))
+        full_ds = Dataset.zip((images, label_ds))
+        full_ds = full_ds.shuffle(num_datapoints)
 
         val_num = round(num_images * vsplit)
         val_ds = (full_ds.take(val_num)
-                    .padded_batch(32)
+                    .batch(batch_size)
                     .prefetch(buffer_size=AUTOTUNE))
         train_ds = (full_ds.skip(val_num)
-                    .padded_batch(32)
+                    .batch(batch_size)
                     .prefetch(buffer_size=AUTOTUNE))
-
+        
         return train_ds, val_ds
 
     def visualize_data(self, axes, num=9):
-        for (images, text), labels in self.train_ds.take(1):
-            for i in range(num):
-                gauss_code = ''.join([ char.decode('utf-8') for char in self._to_char(text[i]).numpy().tolist()])
-                label = self._to_char(labels[i]).numpy().decode('utf-8')
+        num_takes = num // self._batch_size + 1
+        num_per_take = [ self._batch_size for _ in range(num_takes)]
+        num_per_take[-1] = num % self._batch_size 
+        for j, (images, label) in enumerate(self.train_ds.take(num_takes)):
+            for i in range(num_per_take[j]):
+                gauss_code = '[' + ','.join([str(num) for num in label[i].numpy()]) + ']'
 
-                axes[i].imshow(images[i].numpy().astype("uint8"))
-                axes[i].set_title(gauss_code, fontsize=7)
-                axes[i].axes.get_xaxis().set_visible(False)
-                axes[i].axes.get_yaxis().set_visible(False)
-                axes[i].text(180, 560, f'Label: {label}')
+                axes[j*self._batch_size + i].imshow(images[i].numpy().astype("uint8"))
+                axes[j*self._batch_size + i].set_title(gauss_code, fontsize=7)
+                axes[j*self._batch_size + i].axes.get_xaxis().set_visible(False)
+                axes[j*self._batch_size + i].axes.get_yaxis().set_visible(False)
