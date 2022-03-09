@@ -1,15 +1,21 @@
 import sys
 
-from PySide6.QtWidgets import QApplication
+_QT = True
+try:
+    from PySide6.QtWidgets import QApplication
+except ModuleNotFoundError:
+    _QT = False
 
 from tensorflow.config.threading import set_intra_op_parallelism_threads
 from tensorflow.config.threading import set_inter_op_parallelism_threads
 
-from neuralknot.qtgui.mainwindow import MainWindow
+if _QT:
+    from neuralknot.qtgui.mainwindow import MainWindow
 
 from neuralknot.numcrossings.blockconv import BlockModel
 from neuralknot.numcrossings.fullconv import FullConv
 from neuralknot.gaussencoder.simpleGRU import SimpleGRU
+from neuralknot.gaussencoder.doublebiGRU import DoubleBiGRU
 
 set_intra_op_parallelism_threads(8)
 set_inter_op_parallelism_threads(8) 
@@ -39,6 +45,7 @@ def main_cli():
             print('  1) blockconv (numcrossings)')
             print('  2) fullconv (numcrossings)')   
             print('  3) simpleGRU (gaussencoder)')
+            print('  4) doubleBiGRU (gaussencoder)')
             selection = input('Choice: ')
 
             if selection == '1':
@@ -47,6 +54,8 @@ def main_cli():
                 current_model = FullConv()
             elif selection == '3':
                 current_model = SimpleGRU()
+            elif selection == '4':
+                current_model = DoubleBiGRU()
             
         elif choice == '2':
             current_model.plot_history()
@@ -93,4 +102,7 @@ def main_qt():
     return app.exec()
 
 def main():
-    return main_qt()
+    if _QT:
+        return main_qt()
+    else:
+        return main_cli()

@@ -6,11 +6,10 @@ from tensorflow.data import AUTOTUNE
 from neuralknot.common import KnotModel
 
 #AMD docker image specific imports#############################################
-from neuralknot import AMD_CHECK
-if AMD_CHECK:
-    from tensorflow.keras.preprocessing import image_dataset_from_directory
-else:
+try:
     from tensorflow.keras.utils import image_dataset_from_directory
+except (ImportError, ModuleNotFoundError):
+    from tensorflow.keras.preprocessing import image_dataset_from_directory
 ###############################################################################
 
 

@@ -13,11 +13,10 @@ from tensorflow.keras.losses import SparseCategoricalCrossentropy
 from neuralknot.numcrossings.common import NumCrossings
 
 #AMD docker image specific imports#############################################
-from neuralknot import AMD_CHECK
-if AMD_CHECK:
-    from tensorflow.keras.layers.experimental.preprocessing import Rescaling
-else:
+try:
     from tensorflow.keras.layers import Rescaling
+except (ImportError, ModuleNotFoundError):
+    from tensorflow.keras.layers.experimental.preprocessing import Rescaling
 ###############################################################################
 
 

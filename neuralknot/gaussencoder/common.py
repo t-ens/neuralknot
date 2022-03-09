@@ -11,13 +11,10 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 from neuralknot.common import KnotModel
 
 #AMD docker image specific imports#############################################
-from neuralknot import AMD_CHECK
-if AMD_CHECK:
-    from tensorflow.keras.preprocessing import image_dataset_from_directory
-    from tensorflow.python.keras.layers.preprocessing.string_lookup import StringLookup
-else:
+try:
     from tensorflow.keras.utils import image_dataset_from_directory
-    from tensorflow.keras.layers import StringLookup
+except (ImportError, ModuleNotFoundError):
+    from tensorflow.keras.preprocessing import image_dataset_from_directory
 ###############################################################################
 
 
