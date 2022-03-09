@@ -6,6 +6,13 @@ try:
 except ModuleNotFoundError:
     _QT = False
 
+_QT_MODERN = True
+try:
+    from qtmodern import styles, windows
+except ModuleNotFoundError:
+    _QT_MODERN = False
+
+
 from tensorflow.config.threading import set_intra_op_parallelism_threads
 from tensorflow.config.threading import set_inter_op_parallelism_threads
 
@@ -98,7 +105,14 @@ def main_qt():
     app = QApplication(sys.argv)
     win = MainWindow()
     win.menuBar()
-    win.show()
+
+    if _QT_MODERN:
+        styles.dark(app)
+        mwin = windows.ModernWindow(win)
+        mwin.show()
+    else:
+        win.show()
+
     return app.exec()
 
 def main():
