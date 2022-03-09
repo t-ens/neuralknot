@@ -89,3 +89,6 @@ class GaussEncoder(KnotModel):
                 axes[j*self._batch_size + i].set_title(gauss_code, fontsize=7)
                 axes[j*self._batch_size + i].axes.get_xaxis().set_visible(False)
                 axes[j*self._batch_size + i].axes.get_yaxis().set_visible(False)
+
+    def predict(self, image, axes):
+        pass

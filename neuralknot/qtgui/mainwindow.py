@@ -1,10 +1,14 @@
 import sys
 from queue import Queue
 
+from numpy import broadcast_to, reshape 
+
+import cv2
+
 from PySide6.QtCore import Qt, QThread, QObject, Signal, Slot
 from PySide6.QtWidgets import (QApplication, QLabel, QMainWindow, QMenu, 
         QGridLayout, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton,
-        QMessageBox, QTabWidget, QTreeWidget, QTreeWidgetItem)
+        QMessageBox, QTabWidget, QTreeWidget, QTreeWidgetItem, QFileDialog)
 from PySide6.QtGui import QAction, QDoubleValidator
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
@@ -61,7 +65,7 @@ class MainWindow(QMainWindow):
         self.model = None
 
         self.setWindowTitle("Nerualknot")
-        self.resize(600,400)
+        self.resize(800,600)
 
         self.centralWidget = QLabel('Load a model from the Model menu.')
         self.centralWidget.setAlignment(Qt.AlignHCenter | Qt. AlignVCenter)
@@ -72,6 +76,7 @@ class MainWindow(QMainWindow):
 
         self.trainButton = QPushButton("Train")
         self.evaluateButton = QPushButton("Evaluate")
+        self.loadButton = QPushButton("Open file")
 
         self._createActions()
         self._createMenuBar()
@@ -111,6 +116,7 @@ class MainWindow(QMainWindow):
                 lambda: self.train_model(int(self.epochInput.text()))
         )
         self.evaluateButton.clicked.connect(lambda: self.evaluate_model())
+        self.loadButton.clicked.connect(lambda: self.loadFile())
     
     def train_model(self, epochs):
         self.trainModelThread = TrainModelThread(epochs, self.model)
@@ -134,6 +140,12 @@ class MainWindow(QMainWindow):
         self.modelStatusLabel.setText(f'Current Model: {self.model._model_name}')
         self.createLoadedModelWindow()
 
+    def loadFile(self):
+        fname = QFileDialog.getOpenFileName(self, 'Open file', '', 'Image files (*.jpg *.png *.gif)')[0]
+        image = cv2.imread(fname, cv2.IMREAD_GRAYSCALE)
+        image = cv2.resize(image, (512,512))
+        self.model.predict(image, self.predictCanvas.axes)
+        self.predictCanvas.fig.canvas.draw_idle()
 
     def createLoadedModelWindow(self):
         ### The action box 
@@ -190,10 +202,25 @@ class MainWindow(QMainWindow):
         self.dataCanvas.fig.suptitle('Sample Data Plots')
         self.model.visualize_data(self.dataCanvas.axes, num=9)
 
+        self.predictCanvas = MatplotCanvas(self, width=5, height=4, num=2)
+        self.predictCanvas.axes[0].get_xaxis().set_visible(False)
+        self.predictCanvas.axes[0].get_yaxis().set_visible(False)
+        self.predictCanvas.axes[1].get_xaxis().set_visible(False)
+        self.predictCanvas.axes[1].get_yaxis().set_visible(False)
+
+        self.predictBoxLayout = QVBoxLayout()
+        self.predictBoxLayout.addWidget(self.predictCanvas)
+        self.loadButton.setMaximumHeight(30)
+        self.predictBoxLayout.addWidget(self.loadButton)
+
+        self.predictBox = QWidget()
+        self.predictBox.setLayout(self.predictBoxLayout)
+        
         self.tabbedWindows = QTabWidget()
         self.tabbedWindows.addTab(self.historyCanvas, 'Model History')
         self.tabbedWindows.addTab(self.modelCanvas, 'Model Graph')
         self.tabbedWindows.addTab(self.dataCanvas, 'Visualize Data')
+        self.tabbedWindows.addTab(self.predictBox, 'Predict')
 
         self.mainGrid = QHBoxLayout()
         self.mainGrid.addWidget(self.modelBox)

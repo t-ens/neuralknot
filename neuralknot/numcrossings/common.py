@@ -1,14 +1,7 @@
-import numpy as np
-
+from numpy import reshape, argmax, argpartition
 import matplotlib.pyplot as plt
 
-#AMD tensorflow docker image doesn't export image_dataset_from_directoy like usual
-from tensorflow.keras.preprocessing import image_dataset_from_directory
-
 from tensorflow.data import AUTOTUNE
-
-from tensorflow.keras.layers import Softmax
-from tensorflow.keras.models import Sequential
 
 from neuralknot.common import KnotModel
 
@@ -53,38 +46,37 @@ class NumCrossings(KnotModel):
         
         return train_ds, val_ds 
 
-    def predict(self, num):
-        predict_model = Sequential([self.model, Softmax()])
+    def predict(self, image, axes):
+        image = reshape(image, (1, *image.shape, 1))
+        predictions = self.predict_model.predict(image)
+       
+        axes[0].cla()
+        axes[0].imshow(image[0])    
+        axes[0].set_title('Input image')
+        axes[0].get_xaxis().set_visible(False)
+        axes[0].get_yaxis().set_visible(False)
 
-        for images, labels in self.val_ds.take(1):    
-            predictions = predict_model.predict(images)    
-            for i in range(num):    
-        
-                plt.figure()    
-        
-                plt.subplot(2,2,1)    
-                plt.imshow(images[i].numpy().astype("uint8"))    
-                plt.title(f'Number of Crossings: {self.class_names[labels[i]]}')    
-                plt.axis('off')    
-         
-                plt.subplot(2,2,2)    
-                plt.bar(range(1,len(self.class_names)+1), predictions[i])    
-         
-                max_inds = np.argpartition(predictions[i], -3)[-3:]    
-                max_ind = np.argmax(predictions[i])    
-                for j in max_inds:    
-                    if j == max_ind:    
-                        colour = 'r'    
-                    else:    
-                        colour = 'g'    
-                    plt.text(
-                            j+1, 
-                            predictions[i][j], 
-                            self.class_names[j], 
-                            c=colour, 
-                            rotation='45', 
-                            fontsize='x-small')    
-                plt.show()
+        axes[1].cla()
+        axes[1].set_title('Prediction Probabilities')
+        axes[1].get_xaxis().set_visible(False)
+        axes[1].get_yaxis().set_visible(False)
+        for i,_ in enumerate(predictions):
+            axes[1].bar(range(1,len(self.class_names)+1), predictions[i])    
+       
+            max_inds = argpartition(predictions[i], -3)[-3:]    
+            max_ind = argmax(predictions[i])    
+            for j in max_inds:    
+                if j == max_ind:    
+                    colour = 'r'    
+                else:    
+                    colour = 'g'    
+                axes[1].text(
+                        j+1, 
+                        predictions[i][j], 
+                        str(j+1), 
+                        c=colour, 
+                        rotation='45', 
+                        fontsize='x-small')    
 
     def visualize_data(self, axes, num=9):
         for images,labels in self.train_ds.take(1):

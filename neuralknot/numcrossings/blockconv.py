@@ -2,16 +2,10 @@ import os
 
 from tensorflow import reshape
 
-from tensorflow.keras import Input
-from tensorflow.keras.layers import  Layer
-from tensorflow.keras import Model
-
+from tensorflow.keras import Input, Model
+from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers.experimental.preprocessing import Rescaling
-from tensorflow.keras.layers import Conv2D
-from tensorflow.keras.layers import MaxPool2D
-from tensorflow.keras.layers import Flatten
-from tensorflow.keras.layers import Concatenate
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Layer, Conv2D, MaxPool2D, Flatten, Concatenate, Dense, Softmax
 
 from tensorflow.keras.losses import SparseCategoricalCrossentropy
 
@@ -54,6 +48,7 @@ block in dense layer"""
             os.mkdir(self._model_dir)
         
         self.model = self._make_model(len(self.class_names))
+        self.predict_model = Sequential([self.model, Softmax()])
         self.load_weights()
 
     def _make_model(self, num_labels):
