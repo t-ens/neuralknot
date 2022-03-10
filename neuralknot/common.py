@@ -44,18 +44,16 @@ class KnotModel:
     
         if len(fnames)>0:
             history = pd.read_csv(fnames[0]) 
+            columns = history.columns[1:]
+            num_cols = len(columns)
             for fname in fnames[1:]:
                 df = pd.read_csv(fname)
                 history = pd.concat([history, df], axis=0, ignore_index=True)
 
-            axes[0].plot(history['loss'], 'b')
-            axes[0].plot(history['val_loss'], 'g')
-            axes[0].legend(['loss', 'val_loss'])
-
-            axes[1].plot(history['accuracy'], 'b')
-            axes[1].plot(history['val_accuracy'], 'g')
-            axes[1].legend(['acc', 'val_acc'])
-
+            for i in range(num_cols//2):
+                axes[i].plot(history[columns[i]], 'b')
+                axes[i].plot(history[columns[num_cols//2+i]], 'g')
+                axes[i].legend([columns[i], columns[num_cols//2+i]])
         else: 
             print("No training history found")
 

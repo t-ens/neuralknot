@@ -70,6 +70,7 @@ is used"""
         self.height = height
         self.image_size = image_size
         self.max_crossings = max_crossings
+        self.batch_size = 4
         
         self.train_ds, self.val_ds = self.load_data()
         self.model = self._make_model()
@@ -77,14 +78,14 @@ is used"""
 
 
     def _make_model(self):
-        image_input = Input(shape=(512,512,1), batch_size=32)
+        image_input = Input(shape=(512,512,1), batch_size=self.batch_size)
         x = Rescaling(1./255)(image_input)
 
         #Break image vertically, convolve then feed into GRU
         x1 = Reshape((512//self.width, self.width, 512, 1))(x)
-        x1 = Conv2D(32, (2,4), input_shape=image_input[2:])(x1)
+        x1 = Conv2D(32, (2,4), input_shape=image_input[2:], activation='relu')(x1)
         x1 = MaxPool3D(pool_size=(1,2,4))(x1)
-        x1 = Conv2D(32, (2,4), input_shape=image_input[2:])(x1)
+        x1 = Conv2D(32, (2,4), input_shape=image_input[2:], activation='relu')(x1)
         x1 = MaxPool3D(pool_size=(1,2,4))(x1)
         x1 = Reshape((32, x1.get_shape()[2]*x1.get_shape()[3]*x1.get_shape()[4]))(x1)
         x1 = Bidirectional(GRU(100, dropout=0.2, return_sequences=True))(x1)
@@ -94,16 +95,17 @@ is used"""
         x2 = Permute((2,1,3))(x)
         x2 = Reshape((512//self.height, self.height, 512, 1))(x2)
         x2 = Permute((1,3,2,4))(x2)
-        x2 = Conv2D(32, (4,2), input_shape=image_input[2:])(x2)
+        x2 = Conv2D(32, (4,2), input_shape=image_input[2:], activation='relu')(x2)
         x2 = MaxPool3D(pool_size=(1,4,2))(x2)
-        x2 = Conv2D(32, (4,2), input_shape=image_input[2:])(x2)
+        x2 = Conv2D(32, (4,2), input_shape=image_input[2:], activation='relu')(x2)
         x2 = MaxPool3D(pool_size=(1,4,2))(x2)
         x2 = Reshape((32, x2.get_shape()[2]*x2.get_shape()[3]*x2.get_shape()[4]))(x2)
         x2 = Bidirectional(GRU(100, dropout=0.2, return_sequences=True))(x2)
         x2 = Dense(2*self.max_crossings+1)(x2)
 
         x = Add()([x1, x2])
-        output = Softmax()(x)
+        output = x
+        #output = Softmax((x) Softmax done in nn.cttc_loss already
 
         model = Model(image_input, x)
         model.compile(
@@ -111,6 +113,6 @@ is used"""
                 loss = ctc_loss,
                 metrics=[],
                 run_eagerly= True)
-        model.optimizer.lr.assign(1e-4)
+        model.optimizer.lr.assign(1e-6)
 
         return model
